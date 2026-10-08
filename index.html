@@ -10,7 +10,7 @@
             margin: 0;
             padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #fef08a; /* Насыщенный желтый фон */
+            background-color: #fef08a; /* Желтый фон */
             color: #1e293b;
             display: flex;
             flex-direction: column;
@@ -261,15 +261,14 @@
     </div>
 
     <script>
-        // Реальные адреса контрактов токенов и роутера Uniswap V3 в сети Base Mainnet
-        const BASE_CHAIN_ID = '0x2105'; // 8453 в шестнадцатеричной
-        const UNISWAP_V3_ROUTER = '0x2626664c2603336E57B271c5C0b26F421741e481'; //
+        const BASE_CHAIN_ID = '0x2105'; // 8453
+        const UNISWAP_V3_ROUTER = '0x2626664c2603336E57B271c5C0b26F421741e481';
 
         const TOKENS = {
             'ETH': { address: '0x4200000000000000000000000000000000000006', decimals: 18, native: true },
-            'USDC': { address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', decimals: 6, native: false }, //
-            'USDbC': { address: '0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA', decimals: 6, native: false }, //
-            'DAI': { address: '0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb', decimals: 18, native: false } //
+            'USDC': { address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', decimals: 6, native: false },
+            'USDbC': { address: '0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA', decimals: 6, native: false },
+            'DAI': { address: '0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb', decimals: 18, native: false }
         };
 
         let provider, signer, userAddress;
@@ -283,42 +282,39 @@
                 return;
             }
             try {
-                provider = new ethers.providers.Web3Provider(window.ethereum);
-                await provider.send("eth_requestAccounts", []);
-                
+                // Прямой запрос аккаунтов через ethereum provider
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                userAddress = accounts[0];
+
                 // Проверка сети Base
-                const network = await provider.getNetwork();
-                if (network.chainId !== 8453) {
+                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                if (chainId !== BASE_CHAIN_ID) {
                     try {
                         await window.ethereum.request({
                             method: 'wallet_switchEthereumChain',
                             params: [{ chainId: BASE_CHAIN_ID }],
                         });
                     } catch (switchError) {
-                        alert('Пожалуйста, переключите кошелек на сеть Base в настройках.');
+                        alert('Пожалуйста, переключите сеть в кошельке на Base.');
                         return;
                     }
                 }
 
+                provider = new ethers.providers.Web3Provider(window.ethereum);
                 signer = provider.getSigner();
-                userAddress = await signer.getAddress();
-                
-                document.getElementById('connectWalletBtninnerText') = 'Подключено: ' + userAddress.substring(0, 6) + '...';
+
+                const shortAddr = userAddress.substring(0, 6) + '...' + userAddress.substring(38);
+                document.getElementById('connectWalletBtn').innerText = 'Подключено: ' + shortAddr;
                 document.getElementById('connectWalletBtn').style.background = '#15803d';
+                
                 document.getElementById('swapBtn').removeAttribute('disabled');
                 document.getElementById('swapBtn').style.opacity = '1';
                 
-                updateBalances();
+                document.getElementById('payBalance').innerText = 'Баланс: Готов';
             } catch (error) {
                 console.error(error);
-                alert('Ошибка подключения кошелька.');
+                alert('Ошибка подключения кошелька: ' + (error.message || error));
             }
-        }
-
-        async function updateBalances() {
-            if (!userAddress) return;
-            // Здесь можно добавить реальный опрос балансов токенов через ethers.js
-            document.getElementById('payBalance').innerText = 'Баланс: ОК';
         }
 
         function switchTokens() {
@@ -351,7 +347,6 @@
             document.getElementById('tokenModal').style.display = 'none';
         }
 
-        // Функция отправки реальной транзакции обмена в сети Base
         async function executeRealSwap() {
             let amountVal = document.getElementById('payInput').value;
             if (!amountVal || amountVal <= 0) {
@@ -363,7 +358,6 @@
                 alert('Подготовка транзакции обмена в сети Base...');
                 const amountIn = ethers.utils.parseUnits(amountVal, TOKENS[payToken].decimals);
 
-                // Если продаем не ETH, сначала нужно сделать approve токена роутеру Uniswap
                 if (!TOKENS[payToken].native) {
                     const tokenContract = new ethers.Contract(
                         TOKENS[payToken].address,
@@ -374,8 +368,6 @@
                     await txApprove.wait();
                 }
 
-                // Вызов Uniswap V3 Swap Router для обмена
-                // (Для полноценного роутинга в продакшене используется ExactInputSingleParams)
                 const routerAbi = [
                     "function exactInputSingle((address tokenIn, address tokenOut, uint24 fee, address recipient, uint256 deadline, uint256 amountIn, uint256 amountOutMinimum, uint165 sqrtPriceLimitX96)) external payable returns (uint256 amountOut)"
                 ];
@@ -384,11 +376,11 @@
                 const params = {
                     tokenIn: TOKENS[payToken].address,
                     tokenOut: TOKENS[receiveToken].address,
-                    fee: 3000, // 0.3% пул ликвидности
+                    fee: 3000,
                     recipient: userAddress,
-                    deadline: Math.floor(Date.now() / 1000) + 600, // 10 минут
+                    deadline: Math.floor(Date.now() / 1000) + 600,
                     amountIn: amountIn,
-                    amountOutMinimum: 0, // В продакшене обязательно рассчитывайте slippage!
+                    amountOutMinimum: 0,
                     sqrtPriceLimitX96: 0
                 };
 
@@ -402,7 +394,6 @@
                 alert('Транзакция отправлена! Ожидание подтверждения в сети Base...');
                 await tx.wait();
                 alert('Свап успешно выполнен!');
-                updateBalances();
 
             } catch (err) {
                 console.error(err);
@@ -412,4 +403,3 @@
     </script>
 </body>
 </html>
-
