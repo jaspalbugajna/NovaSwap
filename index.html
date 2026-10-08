@@ -10,7 +10,7 @@
             margin: 0;
             padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #fef08a; /* Желтый фон */
+            background-color: #fef08a;
             color: #1e293b;
             display: flex;
             flex-direction: column;
@@ -282,124 +282,9 @@
                 return;
             }
             try {
-                // Прямой запрос аккаунтов через ethereum provider
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 userAddress = accounts[0];
 
-                // Проверка сети Base
                 const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-                if (chainId !== BASE_CHAIN_ID) {
-                    try {
-                        await window.ethereum.request({
-                            method: 'wallet_switchEthereumChain',
-                            params: [{ chainId: BASE_CHAIN_ID }],
-                        });
-                    } catch (switchError) {
-                        alert('Пожалуйста, переключите сеть в кошельке на Base.');
-                        return;
-                    }
-                }
+                if (chainId !== BASE
 
-                provider = new ethers.providers.Web3Provider(window.ethereum);
-                signer = provider.getSigner();
-
-                const shortAddr = userAddress.substring(0, 6) + '...' + userAddress.substring(38);
-                document.getElementById('connectWalletBtn').innerText = 'Подключено: ' + shortAddr;
-                document.getElementById('connectWalletBtn').style.background = '#15803d';
-                
-                document.getElementById('swapBtn').removeAttribute('disabled');
-                document.getElementById('swapBtn').style.opacity = '1';
-                
-                document.getElementById('payBalance').innerText = 'Баланс: Готов';
-            } catch (error) {
-                console.error(error);
-                alert('Ошибка подключения кошелька: ' + (error.message || error));
-            }
-        }
-
-        function switchTokens() {
-            let temp = payToken;
-            payToken = receiveToken;
-            receiveToken = temp;
-            document.getElementById('payTokenSymbol').innerText = payToken;
-            document.getElementById('receiveTokenSymbol').innerText = receiveToken;
-        }
-
-        function openModal(type) {
-            currentSelecting = type;
-            document.getElementById('tokenModal').style.display = 'flex';
-        }
-
-        function closeModal(e) {
-            if (e.target.id === 'tokenModal') document.getElementById('tokenModal').style.display = 'none';
-        }
-
-        function selectToken(symbol) {
-            if (currentSelecting === 'pay') {
-                if (symbol === receiveToken) { switchTokens(); return; }
-                payToken = symbol;
-                document.getElementById('payTokenSymbol').innerText = payToken;
-            } else {
-                if (symbol === payToken) { switchTokens(); return; }
-                receiveToken = symbol;
-                document.getElementById('receiveTokenSymbol').innerText = receiveToken;
-            }
-            document.getElementById('tokenModal').style.display = 'none';
-        }
-
-        async function executeRealSwap() {
-            let amountVal = document.getElementById('payInput').value;
-            if (!amountVal || amountVal <= 0) {
-                alert('Введите корректную сумму');
-                return;
-            }
-
-            try {
-                alert('Подготовка транзакции обмена в сети Base...');
-                const amountIn = ethers.utils.parseUnits(amountVal, TOKENS[payToken].decimals);
-
-                if (!TOKENS[payToken].native) {
-                    const tokenContract = new ethers.Contract(
-                        TOKENS[payToken].address,
-                        ["function approve(address spender, uint256 amount) public returns (bool)"],
-                        signer
-                    );
-                    const txApprove = await tokenContract.approve(UNISWAP_V3_ROUTER, amountIn);
-                    await txApprove.wait();
-                }
-
-                const routerAbi = [
-                    "function exactInputSingle((address tokenIn, address tokenOut, uint24 fee, address recipient, uint256 deadline, uint256 amountIn, uint256 amountOutMinimum, uint165 sqrtPriceLimitX96)) external payable returns (uint256 amountOut)"
-                ];
-                const routerContract = new ethers.Contract(UNISWAP_V3_ROUTER, routerAbi, signer);
-
-                const params = {
-                    tokenIn: TOKENS[payToken].address,
-                    tokenOut: TOKENS[receiveToken].address,
-                    fee: 3000,
-                    recipient: userAddress,
-                    deadline: Math.floor(Date.now() / 1000) + 600,
-                    amountIn: amountIn,
-                    amountOutMinimum: 0,
-                    sqrtPriceLimitX96: 0
-                };
-
-                let tx;
-                if (TOKENS[payToken].native) {
-                    tx = await routerContract.exactInputSingle(params, { value: amountIn });
-                } else {
-                    tx = await routerContract.exactInputSingle(params);
-                }
-
-                alert('Транзакция отправлена! Ожидание подтверждения в сети Base...');
-                await tx.wait();
-                alert('Свап успешно выполнен!');
-
-            } catch (err) {
-                console.error(err);
-                alert('Ошибка при выполнении транзакции: ' + (err.message || err));
-            }
-        }
-    </script>
-</body>
-</html>
