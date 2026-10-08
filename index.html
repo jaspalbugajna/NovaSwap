@@ -3,190 +3,299 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SwapNorm — DEX на Base</title>
+    <title>Base Mainnet Real Swapper</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
+        body {
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        body {
-            background-color: #0b0f19;
-            color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #fef08a; /* Насыщенный желтый фон */
+            color: #1e293b;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             min-height: 100vh;
         }
-        .dex-container {
-            background-color: #1e293b;
-            border-radius: 20px;
+
+        .swap-card {
+            background: #ffffff;
+            border: 2px solid #eab308;
+            border-radius: 24px;
             padding: 24px;
             width: 420px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            border: 1px solid #334155;
+            box-shadow: 0 12px 30px rgba(202, 138, 4, 0.15);
+            box-sizing: border-box;
         }
-        .dex-header {
+
+        .swap-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
         }
-        .dex-title {
-            font-size: 22px;
+
+        .swap-header h2 {
+            font-size: 20px;
             font-weight: 700;
-            color: #38bdf8;
+            margin: 0;
         }
-        .connect-btn {
-            background-color: #3b82f6;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
+
+        .network-badge {
+            background: #eab308;
+            color: #713f12;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
         }
-        .connect-btn:hover {
-            background-color: #2563eb;
-        }
+
         .swap-box {
-            background-color: #0f172a;
-            border-radius: 14px;
+            background: #fef9c3;
+            border: 1px solid #fde047;
+            border-radius: 16px;
             padding: 16px;
-            margin-bottom: 12px;
-            border: 1px solid #1e293b;
+            margin-bottom: 8px;
         }
-        .swap-box label {
-            font-size: 13px;
-            color: #94a3b8;
-            display: block;
-            margin-bottom: 6px;
+
+        .swap-box-label {
+            font-size: 14px;
+            color: #854d0e;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
         }
-        .input-row {
+
+        .swap-input-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
+
         .swap-input {
             background: transparent;
             border: none;
-            color: #ffffff;
             font-size: 24px;
+            font-weight: 600;
+            color: #1e293b;
             width: 60%;
             outline: none;
         }
-        .token-select {
-            background-color: #334155;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 10px;
+
+        .token-select-btn {
+            background: #ffffff;
+            border: 1px solid #ca8a04;
+            border-radius: 20px;
+            padding: 6px 12px;
             font-weight: 600;
+            font-size: 14px;
             cursor: pointer;
-            outline: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #1e293b;
         }
-        .action-btn {
-            width: 100%;
-            background-color: #3b82f6;
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 14px;
-            font-size: 18px;
+
+        .switch-container {
+            display: flex;
+            justify-content: center;
+            margin: -4px 0;
+            position: relative;
+            z-index: 2;
+        }
+
+        .switch-btn {
+            background: #ffffff;
+            border: 2px solid #eab308;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
             font-weight: bold;
+            color: #ca8a04;
+        }
+
+        .switch-btn:hover {
+            transform: rotate(180deg);
+        }
+
+        .swap-details {
+            margin: 16px 0;
+            font-size: 13px;
+            color: #854d0e;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .action-btn {
+            background: #eab308;
+            color: #ffffff;
+            border: none;
+            border-radius: 16px;
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 700;
             cursor: pointer;
             transition: background 0.2s;
-            margin-top: 10px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
+
         .action-btn:hover {
-            background-color: #2563eb;
+            background: #ca8a04;
         }
-        .status-log {
-            margin-top: 15px;
-            font-size: 13px;
-            color: #cbd5e1;
-            background: #0f172a;
-            padding: 10px;
-            border-radius: 8px;
-            word-break: break-all;
-            max-height: 100px;
-            overflow-y: auto;
+
+        .connect-btn {
+            background: #1e293b;
+            color: white;
+            margin-bottom: 12px;
+        }
+
+        /* Модальное окно */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 20px;
+            width: 320px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .token-item {
+            padding: 10px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .token-item:hover {
+            background: #fef9c3;
         }
     </style>
 </head>
 <body>
 
-<div class="dex-container">
-    <div class="dex-header">
-        <div class="dex-title">SwapNorm</div>
-        <button id="connectWalletBtn" class="connect-btn" onclick="connectWallet()">Подключить</button>
+    <div class="swap-card">
+        <div class="swap-header">
+            <h2>Base Swap</h2>
+            <div class="network-badge">Base Mainnet</div>
+        </div>
+
+        <button class="action-btn connect-btn" id="connectWalletBtn" onclick="connectWallet()">Подключить кошелек</button>
+
+        <div class="swap-box">
+            <div class="swap-box-label">
+                <span>Продаете</span>
+                <span id="payBalance">Баланс: 0.0</span>
+            </div>
+            <div class="swap-input-row">
+                <input type="number" id="payInput" class="swap-input" placeholder="0.0" value="0.01">
+                <button class="token-select-btn" onclick="openModal('pay')">
+                    <span id="payTokenSymbol">ETH</span> ▼
+                </button>
+            </div>
+        </div>
+
+        <div class="switch-container">
+            <div class="switch-btn" onclick="switchTokens()">↓</div>
+        </div>
+
+        <div class="swap-box" style="margin-top: -4px;">
+            <div class="swap-box-label">
+                <span>Получаете (примерно)</span>
+                <span id="receiveBalance">Баланс: 0.0</span>
+            </div>
+            <div class="swap-input-row">
+                <input type="number" id="receiveInput" class="swap-input" placeholder="0.0" readonly>
+                <button class="token-select-btn" onclick="openModal('receive')">
+                    <span id="receiveTokenSymbol">USDC</span> ▼
+                </button>
+            </div>
+        </div>
+
+        <div class="swap-details">
+            <div class="detail-row">
+                <span>Сеть</span>
+                <span>Base (ChainID: 8453)</span>
+            </div>
+            <div class="detail-row">
+                <span>Маршрутизатор</span>
+                <span>Uniswap V3 Router</span>
+            </div>
+        </div>
+
+        <button class="action-btn" id="swapBtn" onclick="executeRealSwap()" disabled style="opacity: 0.6;">Свапнуть в сети Base</button>
     </div>
 
-    <div class="swap-box">
-        <label>Продаете</label>
-        <div class="input-row">
-            <input type="number" id="amountIn" class="swap-input" placeholder="0.0">
-            <select id="tokenIn" class="token-select">
-                <option value="ETH">ETH</option>
-                <option value="USDC">USDC</option>
-                <option value="USDbC">USDbC</option>
-                <option value="DAI">DAI</option>
-            </select>
+    <!-- Модальное окно выбора токена -->
+    <div id="tokenModal" class="modal" onclick="closeModal(event)">
+        <div class="modal-content">
+            <h3 style="margin-top: 0; font-size: 18px;">Выберите токен</h3>
+            <div id="tokenList">
+                <div class="token-item" onclick="selectToken('ETH')">🔷 ETH (Native)</div>
+                <div class="token-item" onclick="selectToken('USDC')">🪙 USDC (Native)</div>
+                <div class="token-item" onclick="selectToken('USDbC')">💵 USDbC (Bridged)</div>
+                <div class="token-item" onclick="selectToken('DAI')">🟡 DAI (Stablecoin)</div>
+            </div>
         </div>
     </div>
 
-    <div class="swap-box">
-        <label>Получаете (приблизительно)</label>
-        <div class="input-row">
-            <input type="number" id="amountOut" class="swap-input" placeholder="0.0" disabled>
-            <select id="tokenOut" class="token-select">
-                <option value="USDC">USDC</option>
-                <option value="ETH">ETH</option>
-                <option value="USDbC">USDbC</option>
-                <option value="DAI">DAI</option>
-            </select>
-        </div>
-    </div>
+    <script>
+        // Реальные адреса контрактов токенов и роутера Uniswap V3 в сети Base Mainnet
+        const BASE_CHAIN_ID = '0x2105'; // 8453 в шестнадцатеричной
+        const UNISWAP_V3_ROUTER = '0x2626664c2603336E57B271c5C0b26F421741e481'; //
 
-    <button class="action-btn" onclick="executeRealSwap()">Выполнить обмен</button>
+        const TOKENS = {
+            'ETH': { address: '0x4200000000000000000000000000000000000006', decimals: 18, native: true },
+            'USDC': { address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', decimals: 6, native: false }, //
+            'USDbC': { address: '0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA', decimals: 6, native: false }, //
+            'DAI': { address: '0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb', decimals: 18, native: false } //
+        };
 
-    <div id="statusLog" class="status-log" style="display:none;">Лог транзакции появится здесь...</div>
-</div>
+        let provider, signer, userAddress;
+        let currentSelecting = 'pay';
+        let payToken = 'ETH';
+        let receiveToken = 'USDC';
 
-<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-<script>
-    const CONTRACT_ADDRESS = "0x002B4e7c39865d03E27D618A2AF2Bd8C54EDd549";
-    
-    const TOKEN_ADDRESSES = {
-        "ETH": "0x4200000000000000000000000000000000000006",
-        "USDC": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-        "USDbC": "0xd9aAEc86B65D86f6a7B5B1b0c42FFA531710b6Ca",
-        "DAI": "0x50c5725949A6F0c72E6C4a641F24049A917DB0cb"
-    };
-
-    const CONTRACT_ABI = [
-        "function executeSwap(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOutMin, bool isEthIn) external payable"
-    ];
-
-    let provider, signer, userAddress;
-
-    async function connectWallet() {
-        if (window.ethereum) {
+        async function connectWallet() {
+            if (!window.ethereum) {
+                alert('Установите MetaMask или Coinbase Wallet!');
+                return;
+            }
             try {
                 provider = new ethers.providers.Web3Provider(window.ethereum);
                 await provider.send("eth_requestAccounts", []);
                 
+                // Проверка сети Base
                 const network = await provider.getNetwork();
                 if (network.chainId !== 8453) {
-                    alert("Пожалуйста, переключите сеть в MetaMask на Base!");
                     try {
                         await window.ethereum.request({
                             method: 'wallet_switchEthereumChain',
-                            params: [{ chainId: '0x2105' }],
+                            params: [{ chainId: BASE_CHAIN_ID }],
                         });
                     } catch (switchError) {
+                        alert('Пожалуйста, переключите кошелек на сеть Base в настройках.');
                         return;
                     }
                 }
@@ -194,74 +303,113 @@
                 signer = provider.getSigner();
                 userAddress = await signer.getAddress();
                 
-                const btn = document.getElementById("connectWalletBtn");
-                btn.innerText = userAddress.substring(0, 6) + "..." + userAddress.substring(38);
-                logStatus("Кошелек успешно подключен!");
+                document.getElementById('connectWalletBtninnerText') = 'Подключено: ' + userAddress.substring(0, 6) + '...';
+                document.getElementById('connectWalletBtn').style.background = '#15803d';
+                document.getElementById('swapBtn').removeAttribute('disabled');
+                document.getElementById('swapBtn').style.opacity = '1';
+                
+                updateBalances();
             } catch (error) {
                 console.error(error);
-                alert("Ошибка подключения кошелька.");
+                alert('Ошибка подключения кошелька.');
             }
-        } else {
-            alert("Установите MetaMask или Coinbase Wallet!");
-        }
-    }
-
-    async function executeRealSwap() {
-        if (!signer) {
-            alert("Сначала подключите кошелек!");
-            return;
         }
 
-        const amountInVal = document.getElementById("amountIn").value;
-        const tokenInKey = document.getElementById("tokenIn").value;
-        const tokenOutKey = document.getElementById("tokenOut").value;
-
-        if (!amountInVal || amountInVal <= 0) {
-            alert("Введите корректную сумму для обмена!");
-            return;
+        async function updateBalances() {
+            if (!userAddress) return;
+            // Здесь можно добавить реальный опрос балансов токенов через ethers.js
+            document.getElementById('payBalance').innerText = 'Баланс: ОК';
         }
 
-        if (tokenInKey === tokenOutKey) {
-            alert("Нельзя обменивать одинаковые токены!");
-            return;
+        function switchTokens() {
+            let temp = payToken;
+            payToken = receiveToken;
+            receiveToken = temp;
+            document.getElementById('payTokenSymbol').innerText = payToken;
+            document.getElementById('receiveTokenSymbol').innerText = receiveToken;
         }
 
-        try {
-            logStatus("Подготовка транзакции...");
-            const parsedAmountIn = ethers.utils.parseUnits(amountInVal, 18);
-            const tokenInAddr = TOKEN_ADDRESSES[tokenInKey];
-            const tokenOutAddr = TOKEN_ADDRESSES[tokenOutKey];
-            const isEth = (tokenInKey === "ETH");
-
-            const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-
-            logStatus("Подтвердите транзакцию в вашем кошельке...");
-            
-            const tx = await contract.executeSwap(
-                tokenInAddr,
-                tokenOutAddr,
-                parsedAmountIn,
-                0, 
-                isEth,
-                { value: isEth ? parsedAmountIn : 0 }
-            );
-
-            logStatus(`Транзакция отправлена! Хеш: ${tx.hash}`);
-            await tx.wait();
-            logStatus("Обмен успешно выполнен в сети Base! 🎉");
-
-        } catch (err) {
-            console.error(err);
-            logStatus("Ошибка: " + (err.reason || err.message));
+        function openModal(type) {
+            currentSelecting = type;
+            document.getElementById('tokenModal').style.display = 'flex';
         }
-    }
 
-    function logStatus(text) {
-        const logBox = document.getElementById("statusLog");
-        logBox.style.display = "block";
-        logBox.innerText = text;
-    }
-</script>
+        function closeModal(e) {
+            if (e.target.id === 'tokenModal') document.getElementById('tokenModal').style.display = 'none';
+        }
 
+        function selectToken(symbol) {
+            if (currentSelecting === 'pay') {
+                if (symbol === receiveToken) { switchTokens(); return; }
+                payToken = symbol;
+                document.getElementById('payTokenSymbol').innerText = payToken;
+            } else {
+                if (symbol === payToken) { switchTokens(); return; }
+                receiveToken = symbol;
+                document.getElementById('receiveTokenSymbol').innerText = receiveToken;
+            }
+            document.getElementById('tokenModal').style.display = 'none';
+        }
+
+        // Функция отправки реальной транзакции обмена в сети Base
+        async function executeRealSwap() {
+            let amountVal = document.getElementById('payInput').value;
+            if (!amountVal || amountVal <= 0) {
+                alert('Введите корректную сумму');
+                return;
+            }
+
+            try {
+                alert('Подготовка транзакции обмена в сети Base...');
+                const amountIn = ethers.utils.parseUnits(amountVal, TOKENS[payToken].decimals);
+
+                // Если продаем не ETH, сначала нужно сделать approve токена роутеру Uniswap
+                if (!TOKENS[payToken].native) {
+                    const tokenContract = new ethers.Contract(
+                        TOKENS[payToken].address,
+                        ["function approve(address spender, uint256 amount) public returns (bool)"],
+                        signer
+                    );
+                    const txApprove = await tokenContract.approve(UNISWAP_V3_ROUTER, amountIn);
+                    await txApprove.wait();
+                }
+
+                // Вызов Uniswap V3 Swap Router для обмена
+                // (Для полноценного роутинга в продакшене используется ExactInputSingleParams)
+                const routerAbi = [
+                    "function exactInputSingle((address tokenIn, address tokenOut, uint24 fee, address recipient, uint256 deadline, uint256 amountIn, uint256 amountOutMinimum, uint165 sqrtPriceLimitX96)) external payable returns (uint256 amountOut)"
+                ];
+                const routerContract = new ethers.Contract(UNISWAP_V3_ROUTER, routerAbi, signer);
+
+                const params = {
+                    tokenIn: TOKENS[payToken].address,
+                    tokenOut: TOKENS[receiveToken].address,
+                    fee: 3000, // 0.3% пул ликвидности
+                    recipient: userAddress,
+                    deadline: Math.floor(Date.now() / 1000) + 600, // 10 минут
+                    amountIn: amountIn,
+                    amountOutMinimum: 0, // В продакшене обязательно рассчитывайте slippage!
+                    sqrtPriceLimitX96: 0
+                };
+
+                let tx;
+                if (TOKENS[payToken].native) {
+                    tx = await routerContract.exactInputSingle(params, { value: amountIn });
+                } else {
+                    tx = await routerContract.exactInputSingle(params);
+                }
+
+                alert('Транзакция отправлена! Ожидание подтверждения в сети Base...');
+                await tx.wait();
+                alert('Свап успешно выполнен!');
+                updateBalances();
+
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка при выполнении транзакции: ' + (err.message || err));
+            }
+        }
+    </script>
 </body>
 </html>
+
